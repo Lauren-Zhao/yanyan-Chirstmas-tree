@@ -10,7 +10,7 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-      background: radial-gradient(circle at top, #281032, #050515 70%, #000000);
+      background: radial-gradient(circle at top, #24102f, #050515 70%, #000000);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
       color: #ffeefe;
     }
@@ -26,18 +26,18 @@
       transform: translateX(-50%);
       text-align: center;
       pointer-events: none;
-      text-shadow: 0 0 12px rgba(255, 150, 230, 0.95);
+      text-shadow: 0 0 16px rgba(255, 150, 230, 1);
       z-index: 2;
     }
     .greeting-main {
-      font-size: clamp(26px, 5vw, 40px);
+      font-size: clamp(28px, 5vw, 42px);
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.18em;
     }
     .greeting-sub {
       margin-top: 6px;
       font-size: clamp(16px, 3.2vw, 22px);
-      opacity: 0.9;
+      opacity: 0.95;
     }
     .footer-note {
       position: fixed;
@@ -65,8 +65,8 @@
       var ctx = canvas.getContext("2d");
 
       var W, H, cx, baseY, treeH;
-      var rings = [];       // 树的每一层光环
-      var groundRing = [];  // 地面那一圈光
+      var spiralPoints = []; // 树枝上的粒子（多条螺旋）
+      var groundRing = [];   // 地面光环粒子
       var snow = [];
       var lastTime = performance.now();
 
@@ -83,9 +83,9 @@
 
         cx = W / 2;
         baseY = H * 0.8;
-        treeH = H * 0.6;
+        treeH = H * 0.62;
 
-        createTreeRings();
+        createSpiralTree();
         createGroundRing();
         createSnow();
       }
@@ -97,51 +97,67 @@
         return Math.random() * (max - min) + min;
       }
 
-      // 一层一层的树光环
-      function createTreeRings() {
-        rings = [];
-        var layerCount = 30; // 层数
-        var pointsPerLayer = 140; // 每层粒子数
+      // 🌲 创建“树枝感”的螺旋粒子树
+      function createSpiralTree() {
+        spiralPoints = [];
+        var arms = 4;             // 螺旋枝条条数
+        var turns = 9;            // 每条螺旋绕多少圈
+        var pointsPerArm = 1200;  // 每条枝上的粒子数
 
-        for (var i = 0; i < layerCount; i++) {
-          var t = i / (layerCount - 1); // 0 顶部 1 底部
-          var height = baseY - (1 - t) * treeH; // 顶部高，底部低
+        for (var a = 0; a < arms; a++) {
+          var armOffset = (a / arms) * Math.PI * 2;
+          for (var i = 0; i < pointsPerArm; i++) {
+            var u = i / (pointsPerArm - 1);   // 0→1 从底到顶
+            var level = u;
 
-          // radius: 底部最大，顶部最小（树是三角形）
-          var radius = (0.15 + 0.85 * t) * (W * 0.23);
+            // 树身高度
+            var baseHeight = baseY - (1 - level) * treeH;
 
-          var layer = [];
-          for (var j = 0; j < pointsPerLayer; j++) {
-            var angle = (j / pointsPerLayer) * Math.PI * 2;
-            layer.push({
-              angle: angle,
-              radius: radius + rand(-6, 6),
-              height: height + rand(-3, 3),
-              twinkleSpeed: rand(1.5, 3.5),
+            // 让树枝一层一层起伏（树枝感）
+            var branchWave = Math.sin(level * 16 * Math.PI) * 6 * (1 - level);
+            var y = baseHeight + branchWave;
+
+            // 半径：底部最大，顶部收尖
+            var widthFactor = (1 - level);
+            widthFactor = Math.pow(widthFactor, 1.2);
+            var radius = widthFactor * (W * 0.23);
+
+            // 螺旋角度
+            var angle = turns * level * Math.PI * 2 + armOffset;
+
+            // 加一点随机，避免太规整
+            radius += rand(-4, 4);
+
+            spiralPoints.push({
+              level: level,
+              baseRadius: radius,
+              baseAngle: angle,
+              baseY: y,
+              size: rand(1.2, 2.4),
               phase: rand(0, Math.PI * 2),
-              baseAlpha: rand(0.4, 0.8),
-              size: rand(1.2, 2.4)
+              twinkleSpeed: rand(1.5, 3.5),
+              swaySpeed: rand(1.0, 2.2),
+              swayAmp: rand(0.5, 2.5)
             });
           }
-          rings.push(layer);
         }
       }
 
-      // 地面一圈发光粒子
+      // 地面环形光带
       function createGroundRing() {
         groundRing = [];
         var count = 260;
-        var radius = W * 0.35;
-        var y = baseY + 10;
+        var radius = W * 0.38;
+        var y = baseY + 12;
         for (var i = 0; i < count; i++) {
           var angle = (i / count) * Math.PI * 2;
           groundRing.push({
-            angle: angle,
+            baseAngle: angle,
             radius: radius + rand(-10, 10),
-            height: y + rand(-4, 4),
-            size: rand(1.5, 2.5),
-            baseAlpha: rand(0.2, 0.5),
-            phase: rand(0, Math.PI * 2)
+            y: y + rand(-4, 4),
+            size: rand(1.4, 2.2),
+            phase: rand(0, Math.PI * 2),
+            baseAlpha: rand(0.18, 0.35)
           });
         }
       }
@@ -168,15 +184,15 @@
 
         // 地面柔光
         var grd = ctx.createRadialGradient(
-          cx, baseY + 20, 10,
-          cx, baseY + 20, W * 0.75
+          cx, baseY + 25, 10,
+          cx, baseY + 25, W * 0.8
         );
-        grd.addColorStop(0, "rgba(255,210,250,0.45)");
-        grd.addColorStop(0.4, "rgba(255,190,245,0.25)");
+        grd.addColorStop(0, "rgba(255,210,250,0.42)");
+        grd.addColorStop(0.35, "rgba(255,190,245,0.24)");
         grd.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = grd;
         ctx.beginPath();
-        ctx.arc(cx, baseY + 20, W * 0.75, 0, Math.PI * 2);
+        ctx.arc(cx, baseY + 25, W * 0.8, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -233,7 +249,7 @@
         drawBackground();
         drawTrunk();
 
-        // 雪
+        // ❄ 雪
         for (var i = 0; i < snow.length; i++) {
           var s = snow[i];
           s.y += s.vy * dt;
@@ -252,13 +268,13 @@
           ctx.fill();
         }
 
-        // 地面光环粒子缓慢旋转
+        // 地面光环旋转
         for (i = 0; i < groundRing.length; i++) {
           var gP = groundRing[i];
-          var angle = gP.angle + t * 0.15;
+          var angle = gP.baseAngle + t * 0.2;
           var gx = cx + Math.cos(angle) * gP.radius;
-          var gy = gP.height;
-          var alphaG = gP.baseAlpha + 0.2 * Math.sin(t * 2 + gP.phase);
+          var gy = gP.y;
+          var alphaG = gP.baseAlpha + 0.15 * Math.sin(t * 2 + gP.phase);
           if (alphaG < 0.05) alphaG = 0.05;
           if (alphaG > 0.6) alphaG = 0.6;
 
@@ -268,35 +284,39 @@
           ctx.fill();
         }
 
-        // 树的每一层光环（整体在旋转）
-        for (var li = 0; li < rings.length; li++) {
-          var layer = rings[li];
-          for (var j = 0; j < layer.length; j++) {
-            var p = layer[j];
+        // 树枝螺旋粒子
+        for (i = 0; i < spiralPoints.length; i++) {
+          var p = spiralPoints[i];
 
-            // 基础旋转，让整层环绕转动
-            var angle = p.angle + t * 0.4;
-            // 用 cos(angle) 做「3D 透视」：靠前更亮、更大
-            var depth = (Math.cos(angle) + 1) / 2; // 0~1，1 表示离我们最近
+          // 整棵树的旋转
+          var angle = p.baseAngle + t * 0.4;
 
-            var radiusOnScreen = p.radius * (0.4 + 0.6 * depth);
-            var x = cx + Math.sin(angle) * radiusOnScreen;
-            var y = p.height + (1 - depth) * 10; // 远处稍微往上
+          // 用 cos(angle) 做简单的“前后景深”
+          var depth = (Math.cos(angle) + 1) / 2; // 0~1，1 = 离我们最近
 
-            // 闪烁 + 深度混合
-            var alpha = p.baseAlpha + 0.4 * Math.sin(t * p.twinkleSpeed + p.phase);
-            alpha = alpha * (0.3 + 0.7 * depth);
-            if (alpha < 0.08) alpha = 0.08;
-            if (alpha > 1) alpha = 1;
+          // 在半径上叠加一点左右摆动，让枝条更活
+          var sway = Math.sin(t * p.swaySpeed + p.phase) * p.swayAmp * (0.3 + 0.7 * depth);
 
-            var size = p.size * (0.7 + 0.8 * depth);
+          var radiusOnScreen = (p.baseRadius + sway) * (0.55 + 0.7 * depth);
 
-            ctx.beginPath();
-            ctx.fillStyle = "rgba(255, " + Math.round(150 + depth * 80) +
-                            ", 240," + alpha + ")";
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-          }
+          var x = cx + Math.sin(angle) * radiusOnScreen;
+          var y = p.baseY + (1 - depth) * 12; // 远处稍微往上
+
+          // 闪烁
+          var alpha = p.baseAlpha + 0.4 * Math.sin(t * p.twinkleSpeed + p.phase);
+          alpha = alpha * (0.35 + 0.75 * depth);
+          if (alpha < 0.05) alpha = 0.05;
+          if (alpha > 1) alpha = 1;
+
+          var size = p.size * (0.7 + 0.9 * depth);
+
+          ctx.beginPath();
+          // 越靠前越亮、越白；靠边缘偏粉
+          var gVal = Math.round(130 + depth * 90);
+          var bVal = Math.round(220 + depth * 25);
+          ctx.fillStyle = "rgba(255," + gVal + "," + bVal + "," + alpha + ")";
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
         }
 
         drawStar(t);
