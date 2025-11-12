@@ -1,267 +1,477 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <title>琰琰 圣诞快乐</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      background: radial-gradient(circle at top, #2b123a, #050515 65%, #000000);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-      color: #ffeefe;
-    }
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-    .greeting {
-      position: fixed;
-      top: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      pointer-events: none;
-      text-shadow: 0 0 12px rgba(255, 150, 230, 0.95);
-      z-index: 2;
-    }
-    .greeting-main {
-      font-size: clamp(26px, 5vw, 40px);
-      font-weight: 700;
-      letter-spacing: 0.15em;
-    }
-    .greeting-sub {
-      margin-top: 6px;
-      font-size: clamp(16px, 3.2vw, 22px);
-      opacity: 0.9;
-    }
-    .footer-note {
-      position: fixed;
-      bottom: 6px;
-      right: 10px;
-      font-size: 10px;
-      opacity: 0.35;
-      pointer-events: none;
-      z-index: 2;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python圣诞树 - 琰琰圣诞节快乐</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #0a0a2a, #1a1a4a, #2a2a5a);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin: 20px 0;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+        
+        .greeting {
+            font-size: 2.5rem;
+            margin: 20px 0;
+            color: #ffcc00;
+            text-shadow: 0 0 15px rgba(255, 204, 0, 0.7);
+            animation: glow 2s ease-in-out infinite alternate;
+            position: relative;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: rgba(255, 204, 0, 0.1);
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #ffcc00, 0 0 20px #ffcc00, 0 0 30px #ff9900;
+            }
+            to {
+                text-shadow: 0 0 15px #ffcc00, 0 0 25px #ff9900, 0 0 35px #ff6600;
+            }
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .tree-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+        }
+        
+        .tree {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 500px;
+        }
+        
+        .trunk {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 80px;
+            background: #8B4513;
+            border-radius: 5px;
+        }
+        
+        .branch {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 75px solid transparent;
+            border-right: 75px solid transparent;
+            border-bottom: 100px solid #0a5f0a;
+        }
+        
+        .branch-1 {
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-bottom-color: #0a7f0a;
+        }
+        
+        .branch-2 {
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 120px solid #0a6f0a;
+        }
+        
+        .branch-3 {
+            bottom: 240px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 125px solid transparent;
+            border-right: 125px solid transparent;
+            border-bottom: 140px solid #0a5f0a;
+        }
+        
+        .ornament {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+            animation: bounce 3s infinite ease-in-out;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .ornament-1 { background: #ff3333; top: 40%; left: 45%; animation-delay: 0s; }
+        .ornament-2 { background: #3333ff; top: 50%; left: 60%; animation-delay: 0.5s; }
+        .ornament-3 { background: #ffff33; top: 60%; left: 40%; animation-delay: 1s; }
+        .ornament-4 { background: #ff33ff; top: 70%; left: 55%; animation-delay: 1.5s; }
+        .ornament-5 { background: #33ffff; top: 30%; left: 55%; animation-delay: 2s; }
+        
+        .star {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: gold;
+            font-size: 40px;
+            text-shadow: 0 0 10px yellow;
+            animation: twinkle 2s infinite alternate;
+        }
+        
+        @keyframes twinkle {
+            from { opacity: 0.7; transform: translateX(-50%) scale(1); }
+            to { opacity: 1; transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .snowflakes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .snowflake {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            opacity: 0.8;
+            user-select: none;
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            width: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .info-panel h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #feb47b;
+        }
+        
+        .info-panel p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff7e5f;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+        
+        .hearts {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .heart {
+            position: absolute;
+            color: #ff3366;
+            font-size: 20px;
+            opacity: 0;
+            animation: float 6s ease-in infinite;
+        }
+        
+        @keyframes float {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(-10px) scale(1);
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tree-container, .info-panel {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .greeting {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="greeting">
-    <div class="greeting-main">琰琰 圣诞快乐</div>
-    <div class="greeting-sub">Merry Christmas ✨</div>
-  </div>
-  <div class="footer-note">for 琰琰</div>
+    <div class="header">
+        <h1>Merry Christmas!</h1>
+        <p class="subtitle">Python圣诞树 - 从代码到浪漫</p>
+        <div class="greeting">琰琰 圣诞节快乐</div>
+    </div>
+    
+    <div class="container">
+        <div class="tree-container">
+            <div class="tree">
+                <div class="trunk"></div>
+                <div class="branch branch-1"></div>
+                <div class="branch branch-2"></div>
+                <div class="branch branch-3"></div>
+                
+                <div class="ornament ornament-1"></div>
+                <div class="ornament ornament-2"></div>
+                <div class="ornament ornament-3"></div>
+                <div class="ornament ornament-4"></div>
+                <div class="ornament ornament-5"></div>
+                
+                <div class="star">★</div>
+                
+                <div class="snowflakes" id="snowflakes"></div>
+                <div class="hearts" id="hearts"></div>
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h2>Python圣诞树</h2>
+            <p>从屏幕到星光，从代码到浪漫，这棵Python圣诞树是我送给琰琰的特别礼物，愿你的圣诞节充满温暖和快乐！</p>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">1.9万</div>
+                    <div class="stat-label">观看</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">432</div>
+                    <div class="stat-label">点赞</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1594</div>
+                    <div class="stat-label">收藏</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">6161</div>
+                    <div class="stat-label">转发</div>
+                </div>
+            </div>
+            
+            <p>这个动态雪花圣诞树完全使用HTML、CSS和JavaScript创建，无需任何外部库。雪花随机生成，每个都有不同的飘落速度和大小。</p>
+            
+            <div class="code-block">
+                # 特别为琰琰准备的圣诞树<br>
+                def create_christmas_tree():<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;print("🎄 琰琰 圣诞节快乐！")<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;print("愿你的每一天都充满阳光和欢笑")<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;return "最美好的祝福送给你！"
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>@早起大王 | 特别为琰琰制作 | 圣诞快乐！</p>
+    </div>
 
-  <canvas id="treeCanvas"></canvas>
-
-  <script>
-    (function () {
-      var canvas = document.getElementById("treeCanvas");
-      var ctx = canvas.getContext("2d");
-
-      var W, H, cx, baseY, treeH;
-      var treeParticles = [];
-      var snowParticles = [];
-      var lastTime = performance.now();
-
-      function resize() {
-        W = window.innerWidth || document.documentElement.clientWidth;
-        H = window.innerHeight || document.documentElement.clientHeight;
-
-        var dpr = window.devicePixelRatio || 1;
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        canvas.style.width = W + "px";
-        canvas.style.height = H + "px";
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        cx = W / 2;
-        baseY = H * 0.8;
-        treeH = H * 0.6;
-
-        createTreeParticles();
-        createSnowParticles();
-      }
-
-      window.addEventListener("resize", resize);
-      resize();
-
-      function rand(min, max) {
-        return Math.random() * (max - min) + min;
-      }
-
-      // 生成粉色粒子圣诞树
-      function createTreeParticles() {
-        treeParticles = [];
-        var count = Math.floor(3200 * (W * H) / (800 * 600)); // 粒子很多
-        var i;
-        for (i = 0; i < count; i++) {
-          var level = Math.random();              // 0 底部, 1 顶部
-          var y = baseY - level * treeH;
-          var radius = 30 + level * (W * 0.25);   // 控制树的宽度
-          var angle = Math.random() * Math.PI * 8;
-          var x = cx + Math.sin(angle) * radius * (1 - level * 0.4);
-
-          // 微微左右随机，避免太规整
-          x += (Math.random() * 2 - 1) * 8;
-
-          // 粉色系
-          var r = 255;
-          var g = 140 + Math.random() * 60;
-          var b = 220 + Math.random() * 35;
-
-          treeParticles.push({
-            baseX: x,
-            baseY: y,
-            r: r,
-            g: g,
-            b: b,
-            size: rand(1.2, 2.3),
-            swayAmp: rand(0.5, 2.0),
-            swaySpeed: rand(1.0, 3.0),
-            twinkleSpeed: rand(1.5, 3.5),
-            phase: rand(0, Math.PI * 2),
-            baseAlpha: rand(0.4, 0.8)
-          });
+    <script>
+        // 创建雪花
+        function createSnowflakes() {
+            const snowflakesContainer = document.getElementById('snowflakes');
+            const snowflakeCount = 100;
+            
+            for (let i = 0; i < snowflakeCount; i++) {
+                setTimeout(() => {
+                    createSnowflake();
+                }, i * 200);
+            }
+            
+            function createSnowflake() {
+                const snowflake = document.createElement('div');
+                snowflake.classList.add('snowflake');
+                snowflake.innerHTML = '❄';
+                
+                // 随机属性
+                const size = Math.random() * 15 + 10;
+                const startPosition = Math.random() * 100;
+                const animationDuration = Math.random() * 5 + 5;
+                const opacity = Math.random() * 0.5 + 0.3;
+                const delay = Math.random() * 5;
+                
+                snowflake.style.fontSize = `${size}px`;
+                snowflake.style.left = `${startPosition}%`;
+                snowflake.style.opacity = opacity;
+                snowflake.style.animation = `fall ${animationDuration}s linear infinite`;
+                snowflake.style.animationDelay = `${delay}s`;
+                
+                snowflakesContainer.appendChild(snowflake);
+                
+                // 雪花落下后移除
+                setTimeout(() => {
+                    if (snowflake.parentNode) {
+                        snowflake.remove();
+                    }
+                }, (animationDuration + delay) * 1000);
+            }
         }
-      }
-
-      // 生成大量雪花
-      function createSnowParticles() {
-        snowParticles = [];
-        var count = Math.floor(600 * (W * H) / (800 * 600)); // 雪比之前多
-        var i;
-        for (i = 0; i < count; i++) {
-          snowParticles.push({
-            x: rand(0, W),
-            y: rand(-H, H),
-            vy: rand(30, 90),
-            amp: rand(5, 20),
-            phase: rand(0, Math.PI * 2),
-            size: rand(1, 3)
-          });
+        
+        // 创建爱心
+        function createHearts() {
+            const heartsContainer = document.getElementById('hearts');
+            const heartCount = 15;
+            
+            for (let i = 0; i < heartCount; i++) {
+                setTimeout(() => {
+                    createHeart();
+                }, i * 1000);
+            }
+            
+            function createHeart() {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                heart.innerHTML = '❤';
+                
+                // 随机属性
+                const size = Math.random() * 20 + 15;
+                const startPosition = Math.random() * 80 + 10;
+                const animationDuration = Math.random() * 3 + 4;
+                
+                heart.style.fontSize = `${size}px`;
+                heart.style.left = `${startPosition}%`;
+                heart.style.animationDuration = `${animationDuration}s`;
+                
+                heartsContainer.appendChild(heart);
+                
+                // 爱心动画结束后移除
+                setTimeout(() => {
+                    if (heart.parentNode) {
+                        heart.remove();
+                    }
+                }, animationDuration * 1000);
+            }
         }
-      }
-
-      function drawBackground() {
-        ctx.fillStyle = "#050515";
-        ctx.fillRect(0, 0, W, H);
-
-        // 地面光圈
-        var grd = ctx.createRadialGradient(
-          cx, baseY + 20, 10,
-          cx, baseY + 20, W * 0.7
-        );
-        grd.addColorStop(0, "rgba(255,210,250,0.45)");
-        grd.addColorStop(0.3, "rgba(255,190,245,0.28)");
-        grd.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.arc(cx, baseY + 20, W * 0.7, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      function drawTrunk() {
-        var tw = Math.max(18, W * 0.02);
-        var th = Math.max(50, H * 0.09);
-        ctx.fillStyle = "#8a5538";
-        ctx.fillRect(cx - tw / 2, baseY, tw, th);
-      }
-
-      function drawStar(t) {
-        var topY = baseY - treeH;
-        var baseR = Math.max(10, Math.min(W, H) * 0.02);
-        var pulse = 1 + 0.2 * Math.sin(t * 3);
-        var outer = baseR * pulse;
-        var inner = outer * 0.5;
-
-        // 光晕
-        var g = ctx.createRadialGradient(
-          cx, topY, 0,
-          cx, topY, outer * 4
-        );
-        g.addColorStop(0, "rgba(255,255,210,0.98)");
-        g.addColorStop(1, "rgba(255,255,210,0)");
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(cx, topY, outer * 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 星形本体
-        ctx.save();
-        ctx.translate(cx, topY);
-        ctx.rotate(t * 0.5);
-        ctx.beginPath();
-        var spikes = 5;
-        var i;
-        for (i = 0; i < spikes * 2; i++) {
-          var r = (i % 2 === 0) ? outer : inner;
-          var ang = (i * Math.PI) / spikes;
-          var x = Math.cos(ang) * r;
-          var y = Math.sin(ang) * r;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = "rgba(255,255,235,1)";
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function loop(now) {
-        var dt = (now - lastTime) / 1000;
-        if (dt > 0.05) dt = 0.05;
-        lastTime = now;
-        var t = now / 1000;
-
-        drawBackground();
-        drawTrunk();
-
-        // 雪花
-        var i, s, p;
-        for (i = 0; i < snowParticles.length; i++) {
-          s = snowParticles[i];
-          s.y += s.vy * dt;
-          s.x += Math.sin(t * 1.5 + s.phase) * s.amp * dt;
-
-          if (s.y > H + 10) {
-            s.y = rand(-50, -10);
-            s.x = rand(0, W);
-          }
-          if (s.x < -20) s.x = W + 20;
-          if (s.x > W + 20) s.x = -20;
-
-          ctx.beginPath();
-          ctx.fillStyle = "rgba(235,235,255,0.9)";
-          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // 树粒子
-        for (i = 0; i < treeParticles.length; i++) {
-          p = treeParticles[i];
-          var sway = Math.sin(t * p.swaySpeed + p.phase) * p.swayAmp;
-          var alpha = p.baseAlpha + 0.4 * Math.sin(t * p.twinkleSpeed + p.phase);
-          if (alpha < 0.1) alpha = 0.1;
-          if (alpha > 1) alpha = 1;
-
-          ctx.beginPath();
-          ctx.fillStyle = "rgba(" + p.r + "," + p.g + "," + p.b + "," + alpha + ")";
-          ctx.arc(p.baseX + sway, p.baseY, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        drawStar(t);
-        requestAnimationFrame(loop);
-      }
-
-      requestAnimationFrame(loop);
-    })();
-  </script>
+        
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                from {
+                    transform: translateY(-100px) rotate(0deg);
+                }
+                to {
+                    transform: translateY(600px) rotate(360deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 初始化雪花和爱心
+        document.addEventListener('DOMContentLoaded', function() {
+            createSnowflakes();
+            createHearts();
+        });
+        
+        // 持续生成雪花
+        setInterval(createSnowflakes, 10000);
+        
+        // 持续生成爱心
+        setInterval(createHearts, 5000);
+    </script>
 </body>
 </html>
