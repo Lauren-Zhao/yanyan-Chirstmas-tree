@@ -3,79 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <title>琰琰 圣诞快乐</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: radial-gradient(circle at top, #2b123a, #050515 65%, #000000);
+      background: #050514;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-      color: #ffeefe;
+      color: #fff0ff;
     }
-
     canvas {
       display: block;
     }
-
-    .greeting {
+    .title {
       position: fixed;
-      top: 5%;
+      top: 6%;
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
-      pointer-events: none;
       text-shadow: 0 0 10px rgba(255, 150, 230, 0.9);
+      pointer-events: none;
     }
-
-    .greeting-main {
+    .title-main {
       font-size: clamp(26px, 5vw, 40px);
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.1em;
     }
-
-    .greeting-sub {
+    .title-sub {
       margin-top: 6px;
-      font-size: clamp(16px, 3.2vw, 22px);
-      opacity: 0.9;
+      font-size: clamp(16px, 3vw, 22px);
     }
-
-    .footer-note {
+    .footer {
       position: fixed;
-      bottom: 6px;
+      bottom: 8px;
       right: 10px;
       font-size: 10px;
-      opacity: 0.35;
+      opacity: 0.4;
       pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <div class="greeting">
-    <div class="greeting-main">琰琰 圣诞快乐</div>
-    <div class="greeting-sub">Merry Christmas ✨</div>
+  <div class="title">
+    <div class="title-main">琰琰 圣诞快乐</div>
+    <div class="title-sub">Merry Christmas ✨</div>
   </div>
-  <div class="footer-note">for 琰琰</div>
-  <canvas id="treeCanvas"></canvas>
+  <div class="footer">for 琰琰</div>
+
+  <canvas id="c"></canvas>
 
   <script>
-    const canvas = document.getElementById("treeCanvas");
+    // ========= 基础设置 =========
+    const canvas = document.getElementById("c");
     const ctx = canvas.getContext("2d");
 
-    let W, H, centerX, baseY, treeHeight;
-    let particles = [];
-    let snows = [];
+    let W, H, cx, baseY, treeH;
+    const lights = [];
+    const snows = [];
 
     function resize() {
       W = window.innerWidth;
       H = window.innerHeight;
       canvas.width = W;
       canvas.height = H;
-      centerX = W / 2;
+      cx = W / 2;
       baseY = H * 0.8;
-      treeHeight = H * 0.6;
-      createTreeParticles();
-      createSnows();
+      treeH = H * 0.6;
+      initLights();
+      initSnows();
     }
 
     window.addEventListener("resize", resize);
@@ -85,140 +81,80 @@
       return Math.random() * (max - min) + min;
     }
 
-    class Particle {
-      constructor(x, y, color) {
-        this.baseX = x;
-        this.baseY = y;
-        this.color = color;
-        this.amp = rand(0.5, 2.5);
-        this.speed = rand(1.0, 3.0);
-        this.phase = rand(0, Math.PI * 2);
-        this.size = rand(1.3, 2.3);
-      }
+    // ========= 圣诞树灯光粒子 =========
+    function initLights() {
+      lights.length = 0;
+      const count = Math.floor(600 * (W * H) / (800 * 600)); // 自适应数量
 
-      draw(t) {
-        const offset = Math.sin(t * this.speed + this.phase) * this.amp;
-        const x = this.baseX + offset;
-        const y = this.baseY;
-        ctx.beginPath();
-        ctx.fillStyle = this.color;
-        ctx.arc(x, y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    class Snow {
-      constructor() {
-        this.reset(true);
-      }
-
-      reset(startRandomY = false) {
-        this.x = rand(0, W);
-        this.y = startRandomY ? rand(-H, 0) : rand(-50, -10);
-        this.speedY = rand(30, 80);
-        this.speedX = rand(-10, 10);
-        this.size = rand(1, 3);
-        this.swingPhase = rand(0, Math.PI * 2);
-        this.swingAmp = rand(5, 15);
-      }
-
-      update(dt, t) {
-        this.y += this.speedY * dt;
-        this.x += Math.sin(t * 1.2 + this.swingPhase) * dt * this.swingAmp;
-        if (this.y > H + 10) {
-          this.reset(false);
-        }
-      }
-
-      draw() {
-        ctx.beginPath();
-        ctx.fillStyle = "rgba(235,235,255,0.9)";
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    function createTreeParticles() {
-      particles = [];
-      const count = Math.floor(1800 * (W * H) / (800 * 600)); // 尺寸自适应粒子数量
       for (let i = 0; i < count; i++) {
-        const r = Math.random();
-        const y = baseY - r * treeHeight;
-        const level = (baseY - y) / treeHeight;
-        const halfWidth = 20 + level * (W * 0.19);
-        let x = centerX + rand(-halfWidth, halfWidth);
+        const level = Math.random();              // 0 底层，1 顶部
+        const y = baseY - level * treeH;
+        const halfW = 10 + level * (W * 0.35);    // 越往下越宽
+        let x = cx + (Math.random() * 2 - 1) * halfW;
 
-        const angle = level * 10 * Math.PI;
-        const spiralOffset = Math.sin(angle) * 15 * (1 - level);
-        x += spiralOffset;
+        // 略微螺旋，让树不那么死板
+        const angle = level * 8 * Math.PI;
+        x += Math.sin(angle) * 10 * (1 - level);
 
-        const baseCol = [255, 150, 230]; // 粉色基调
-        const jitter = (v) => Math.max(0, Math.min(255, v + rand(-20, 20)));
-        const color = `rgb(${jitter(baseCol[0])},${jitter(baseCol[1])},${jitter(baseCol[2])})`;
-
-        particles.push(new Particle(x, y, color));
+        lights.push({
+          x, y,
+          phase: rand(0, Math.PI * 2),
+          speed: rand(1, 3),
+          size: rand(1.5, 3),
+          baseAlpha: rand(0.4, 0.8)
+        });
       }
     }
 
-    function createSnows() {
-      snows = [];
-      const count = Math.floor(180 * (W * H) / (800 * 600));
+    // ========= 飘雪粒子 =========
+    function initSnows() {
+      snows.length = 0;
+      const count = Math.floor(120 * (W * H) / (800 * 600));
       for (let i = 0; i < count; i++) {
-        snows.push(new Snow());
+        snows.push({
+          x: rand(0, W),
+          y: rand(-H, 0),
+          vy: rand(20, 60),
+          size: rand(1, 3),
+          phase: rand(0, Math.PI * 2),
+          amp: rand(5, 15)
+        });
       }
     }
 
-    function drawGlow(t) {
-      const topY = baseY - treeHeight;
-      const maxR = Math.min(W, H) * 0.35;
-      const layers = 7;
-      for (let i = 0; i < layers; i++) {
-        const radius = maxR * (i + 1) / layers;
-        const alpha = 0.14 - i * 0.015;
-        if (alpha <= 0) continue;
-        const pulse = 1 + 0.06 * Math.sin(t * 1.5 + i);
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(255,160,240,${alpha})`;
-        ctx.arc(centerX, topY, radius * pulse, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
+    // ========= 画树干 =========
     function drawTrunk() {
-      const trunkWidth = Math.max(18, W * 0.02);
-      const trunkHeight = Math.max(50, H * 0.09);
+      const tw = Math.max(18, W * 0.02);
+      const th = Math.max(40, H * 0.08);
       ctx.fillStyle = "#8a5538";
-      ctx.fillRect(centerX - trunkWidth / 2, baseY, trunkWidth, trunkHeight);
+      ctx.fillRect(cx - tw / 2, baseY, tw, th);
     }
 
+    // ========= 画顶部星星 =========
     function drawStar(t) {
-      const topY = baseY - treeHeight;
-      const baseR = Math.max(8, Math.min(W, H) * 0.01);
-      const pulse = 1 + 0.15 * Math.sin(t * 3);
-      const radius = baseR * pulse;
+      const topY = baseY - treeH;
+      const R = Math.max(10, Math.min(W, H) * 0.018);
+      const pulse = 1 + 0.2 * Math.sin(t * 3);
+      const outer = R * pulse;
+      const inner = R * 0.5;
 
-      // 外部光晕
-      const gradient = ctx.createRadialGradient(
-        centerX, topY, radius * 0.2,
-        centerX, topY, radius * 3
-      );
-      gradient.addColorStop(0, "rgba(255,255,210,0.9)");
-      gradient.addColorStop(1, "rgba(255,255,210,0)");
-      ctx.fillStyle = gradient;
+      // 光晕
+      const g = ctx.createRadialGradient(cx, topY, 0, cx, topY, outer * 4);
+      g.addColorStop(0, "rgba(255,255,210,0.95)");
+      g.addColorStop(1, "rgba(255,255,210,0)");
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(centerX, topY, radius * 3, 0, Math.PI * 2);
+      ctx.arc(cx, topY, outer * 4, 0, Math.PI * 2);
       ctx.fill();
 
       // 星形
-      const spikes = 5;
-      const outerRadius = radius * 1.6;
-      const innerRadius = radius * 0.6;
       ctx.save();
-      ctx.translate(centerX, topY);
+      ctx.translate(cx, topY);
       ctx.rotate(t * 0.6);
       ctx.beginPath();
+      const spikes = 5;
       for (let i = 0; i < spikes * 2; i++) {
-        const r = i % 2 === 0 ? outerRadius : innerRadius;
+        const r = i % 2 === 0 ? outer : inner;
         const angle = (i * Math.PI) / spikes;
         const x = Math.cos(angle) * r;
         const y = Math.sin(angle) * r;
@@ -226,40 +162,282 @@
         else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = "rgba(255,255,220,0.98)";
+      ctx.fillStyle = "rgba(255,255,230,1)";
       ctx.fill();
       ctx.restore();
     }
 
-    let lastTime = performance.now();
+    // ========= 动画主循环 =========
+    let last = performance.now();
 
     function loop(now) {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
+      const dt = (now - last) / 1000;
+      last = now;
       const t = now / 1000;
 
-      // 背景渐变叠加一点轻微动感
-      ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#050515";
+      // 背景
+      ctx.fillStyle = "#050514";
       ctx.fillRect(0, 0, W, H);
 
-      drawGlow(t);
+      // 地面光
+      const grd = ctx.createRadialGradient(cx, baseY + 20, 10, cx, baseY + 20, W * 0.6);
+      grd.addColorStop(0, "rgba(255,200,250,0.25)");
+      grd.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(cx, baseY + 20, W * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
       drawTrunk();
 
       // 雪
       for (const s of snows) {
-        s.update(dt, t);
-        s.draw();
+        s.y += s.vy * dt;
+        s.x += Math.sin(t * 1.2 + s.phase) * dt * s.amp;
+        if (s.y > H + 10) {
+          s.y = rand(-50, -10);
+          s.x = rand(0, W);
+      <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>琰琰 圣诞快乐</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #050514;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      color: #fff0ff;
+    }
+    canvas {
+      display: block;
+    }
+    .title {
+      position: fixed;
+      top: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      text-shadow: 0 0 10px rgba(255, 150, 230, 0.9);
+      pointer-events: none;
+    }
+    .title-main {
+      font-size: clamp(26px, 5vw, 40px);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .title-sub {
+      margin-top: 6px;
+      font-size: clamp(16px, 3vw, 22px);
+    }
+    .footer {
+      position: fixed;
+      bottom: 8px;
+      right: 10px;
+      font-size: 10px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">
+    <div class="title-main">琰琰 圣诞快乐</div>
+    <div class="title-sub">Merry Christmas ✨</div>
+  </div>
+  <div class="footer">for 琰琰</div>
+
+  <canvas id="c"></canvas>
+
+  <script>
+    // ========= 基础设置 =========
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    let W, H, cx, baseY, treeH;
+    const lights = [];
+    const snows = [];
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+      cx = W / 2;
+      baseY = H * 0.8;
+      treeH = H * 0.6;
+      initLights();
+      initSnows();
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    // ========= 圣诞树灯光粒子 =========
+    function initLights() {
+      lights.length = 0;
+      const count = Math.floor(600 * (W * H) / (800 * 600)); // 自适应数量
+
+      for (let i = 0; i < count; i++) {
+        const level = Math.random();              // 0 底层，1 顶部
+        const y = baseY - level * treeH;
+        const halfW = 10 + level * (W * 0.35);    // 越往下越宽
+        let x = cx + (Math.random() * 2 - 1) * halfW;
+
+        // 略微螺旋，让树不那么死板
+        const angle = level * 8 * Math.PI;
+        x += Math.sin(angle) * 10 * (1 - level);
+
+        lights.push({
+          x, y,
+          phase: rand(0, Math.PI * 2),
+          speed: rand(1, 3),
+          size: rand(1.5, 3),
+          baseAlpha: rand(0.4, 0.8)
+        });
+      }
+    }
+
+    // ========= 飘雪粒子 =========
+    function initSnows() {
+      snows.length = 0;
+      const count = Math.floor(120 * (W * H) / (800 * 600));
+      for (let i = 0; i < count; i++) {
+        snows.push({
+          x: rand(0, W),
+          y: rand(-H, 0),
+          vy: rand(20, 60),
+          size: rand(1, 3),
+          phase: rand(0, Math.PI * 2),
+          amp: rand(5, 15)
+        });
+      }
+    }
+
+    // ========= 画树干 =========
+    function drawTrunk() {
+      const tw = Math.max(18, W * 0.02);
+      const th = Math.max(40, H * 0.08);
+      ctx.fillStyle = "#8a5538";
+      ctx.fillRect(cx - tw / 2, baseY, tw, th);
+    }
+
+    // ========= 画顶部星星 =========
+    function drawStar(t) {
+      const topY = baseY - treeH;
+      const R = Math.max(10, Math.min(W, H) * 0.018);
+      const pulse = 1 + 0.2 * Math.sin(t * 3);
+      const outer = R * pulse;
+      const inner = R * 0.5;
+
+      // 光晕
+      const g = ctx.createRadialGradient(cx, topY, 0, cx, topY, outer * 4);
+      g.addColorStop(0, "rgba(255,255,210,0.95)");
+      g.addColorStop(1, "rgba(255,255,210,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, topY, outer * 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 星形
+      ctx.save();
+      ctx.translate(cx, topY);
+      ctx.rotate(t * 0.6);
+      ctx.beginPath();
+      const spikes = 5;
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const angle = (i * Math.PI) / spikes;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,230,1)";
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ========= 动画主循环 =========
+    let last = performance.now();
+
+    function loop(now) {
+      const dt = (now - last) / 1000;
+      last = now;
+      const t = now / 1000;
+
+      // 背景
+      ctx.fillStyle = "#050514";
+      ctx.fillRect(0, 0, W, H);
+
+      // 地面光
+      const grd = ctx.createRadialGradient(cx, baseY + 20, 10, cx, baseY + 20, W * 0.6);
+      grd.addColorStop(0, "rgba(255,200,250,0.25)");
+      grd.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(cx, baseY + 20, W * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawTrunk();
+
+      // 雪
+      for (const s of snows) {
+        s.y += s.vy * dt;
+        s.x += Math.sin(t * 1.2 + s.phase) * dt * s.amp;
+        if (s.y > H + 10) {
+          s.y = rand(-50, -10);
+          s.x = rand(0, W);
+        }
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(235,235,255,0.9)";
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // 树粒子
-      for (const p of particles) {
-        p.draw(t);
+      // 树灯
+      for (const p of lights) {
+        const a = p.baseAlpha + 0.4 * Math.sin(t * p.speed + p.phase);
+        const alpha = Math.max(0.1, Math.min(1, a));
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,170,240,${alpha})`;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // 星星
       drawStar(t);
+      requestAnimationFrame(loop);
+    }
 
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>  }
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(235,235,255,0.9)";
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 树灯
+      for (const p of lights) {
+        const a = p.baseAlpha + 0.4 * Math.sin(t * p.speed + p.phase);
+        const alpha = Math.max(0.1, Math.min(1, a));
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,170,240,${alpha})`;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      drawStar(t);
       requestAnimationFrame(loop);
     }
 
