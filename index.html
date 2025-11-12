@@ -1,149 +1,152 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <title>琰琰 圣诞快乐</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      background: #03010f;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .title {
-      position: fixed;
-      top: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      color: #ffe8ff;
-      text-shadow: 0 0 15px rgba(255,150,240,0.9);
-      z-index: 10;
-      pointer-events: none;
-    }
-    .title-main {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-    }
-    .title-sub {
-      margin-top: 6px;
-      font-size: 1.2rem;
-    }
-  </style>
-</head>
-<body>
+import pygame
+import random
+import math
+import sys
 
-<div class="title">
-  <div class="title-main">琰琰 圣诞快乐</div>
-  <div class="title-sub">Merry Christmas ✨</div>
-</div>
+# 初始化pygame
+pygame.init()
 
-<!-- 引入 three.js CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+# 设置窗口尺寸
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Python圣诞树 - 动态雪花效果")
 
-<script>
-  // 创建场景、摄像机、渲染器
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
-  camera.position.set(0, 150, 500);
+# 颜色定义
+DARK_GREEN = (0, 100, 0)
+GREEN = (0, 150, 0)
+LIGHT_GREEN = (100, 200, 100)
+BROWN = (139, 69, 19)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+PURPLE = (128, 0, 128)
+WHITE = (255, 255, 255)
+GOLD = (255, 215, 0)
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+# 雪花类
+class Snowflake:
+    def __init__(self):
+        self.x = random.randint(0, WIDTH)
+        self.y = random.randint(-100, 0)
+        self.size = random.randint(2, 5)
+        self.speed = random.uniform(1, 3)
+        self.wind = random.uniform(-0.5, 0.5)
+        self.angle = random.uniform(0, 2 * math.pi)
+        self.rotation_speed = random.uniform(-0.05, 0.05)
+        
+    def update(self):
+        self.y += self.speed
+        self.x += self.wind
+        self.angle += self.rotation_speed
+        
+        # 如果雪花飘出屏幕，重新生成一个
+        if self.y > HEIGHT:
+            self.y = random.randint(-100, 0)
+            self.x = random.randint(0, WIDTH)
+            
+    def draw(self):
+        # 绘制六角雪花
+        points = []
+        for i in range(6):
+            angle = self.angle + i * math.pi / 3
+            px = self.x + self.size * math.cos(angle)
+            py = self.y + self.size * math.sin(angle)
+            points.append((px, py))
+            
+        pygame.draw.polygon(screen, WHITE, points)
 
-  // 创建圣诞树粒子
-  const treeParticles = [];
-  const particleCount = 9000; // 粒子数量
-  const geometry = new THREE.BufferGeometry();
-  const positions = [];
-  const colors = [];
-  const sizes = [];
+# 创建雪花
+snowflakes = [Snowflake() for _ in range(150)]
 
-  for (let i = 0; i < particleCount; i++) {
-    const level = Math.random();            // 0~1 (底→顶)
-    const radius = (1 - level) * 180;       // 树的横向半径
-    const angle = Math.random() * Math.PI * 6;  // 多圈螺旋感
-    const x = Math.sin(angle) * radius;
-    const z = Math.cos(angle) * radius;
-    const y = level * 350 - 100;
+# 绘制圣诞树函数
+def draw_tree():
+    # 绘制树干
+    pygame.draw.rect(screen, BROWN, (WIDTH//2 - 20, HEIGHT//2 + 100, 40, 100))
+    
+    # 绘制树层
+    layers = [
+        (WIDTH//2, HEIGHT//2 - 100, 180),
+        (WIDTH//2, HEIGHT//2, 150),
+        (WIDTH//2, HEIGHT//2 + 80, 120)
+    ]
+    
+    for x, y, width in layers:
+        pygame.draw.polygon(screen, GREEN, [
+            (x - width//2, y),
+            (x, y - 80),
+            (x + width//2, y)
+        ])
+        pygame.draw.polygon(screen, LIGHT_GREEN, [
+            (x - width//2 + 10, y),
+            (x, y - 70),
+            (x + width//2 - 10, y)
+        ])
+    
+    # 绘制装饰球
+    ornaments = [
+        (WIDTH//2 - 60, HEIGHT//2 - 60, RED),
+        (WIDTH//2 + 60, HEIGHT//2 - 40, BLUE),
+        (WIDTH//2 - 40, HEIGHT//2 + 20, YELLOW),
+        (WIDTH//2 + 40, HEIGHT//2 + 60, PURPLE),
+        (WIDTH//2, HEIGHT//2 - 120, GOLD)
+    ]
+    
+    for x, y, color in ornaments:
+        pygame.draw.circle(screen, color, (x, y), 10)
+        pygame.draw.circle(screen, WHITE, (x, y), 10, 2)
+    
+    # 绘制树顶星星
+    star_points = []
+    for i in range(5):
+        # 外点
+        angle = math.pi/2 + i * 2*math.pi/5
+        px = WIDTH//2 + 20 * math.cos(angle)
+        py = HEIGHT//2 - 180 + 20 * math.sin(angle)
+        star_points.append((px, py))
+        
+        # 内点
+        angle = math.pi/2 + (i + 0.5) * 2*math.pi/5
+        px = WIDTH//2 + 10 * math.cos(angle)
+        py = HEIGHT//2 - 180 + 10 * math.sin(angle)
+        star_points.append((px, py))
+    
+    pygame.draw.polygon(screen, GOLD, star_points)
 
-    positions.push(x, y, z);
+# 绘制文字
+def draw_text():
+    font = pygame.font.SysFont('simhei', 36)
+    text = font.render("Merry Christmas!", True, WHITE)
+    screen.blit(text, (WIDTH//2 - text.get_width()//2, 30))
+    
+    font_small = pygame.font.SysFont('simhei', 20)
+    text2 = font_small.render("Python圣诞树 - 从代码到浪漫", True, WHITE)
+    screen.blit(text2, (WIDTH//2 - text2.get_width()//2, HEIGHT - 50))
 
-    // 粉色光点
-    const r = 1.0;
-    const g = 0.65 + Math.random() * 0.2;
-    const b = 0.9 + Math.random() * 0.1;
-    colors.push(r, g, b);
+# 主循环
+clock = pygame.time.Clock()
+running = True
 
-    sizes.push(3 + Math.random() * 3);
-  }
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    # 填充深蓝色背景
+    screen.fill((0, 0, 50))
+    
+    # 更新并绘制所有雪花
+    for snowflake in snowflakes:
+        snowflake.update()
+        snowflake.draw()
+    
+    # 绘制圣诞树
+    draw_tree()
+    
+    # 绘制文字
+    draw_text()
+    
+    pygame.display.flip()
+    clock.tick(30)
 
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-
-  const material = new THREE.PointsMaterial({
-    vertexColors: true,
-    size: 6,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 0.9
-  });
-
-  const tree = new THREE.Points(geometry, material);
-  scene.add(tree);
-
-  // 大量雪花
-  const snowGeo = new THREE.BufferGeometry();
-  const snowCount = 2000;
-  const snowPos = [];
-
-  for (let i = 0; i < snowCount; i++) {
-    snowPos.push(
-      (Math.random() - 0.5) * 1500,
-      Math.random() * 800,
-      (Math.random() - 0.5) * 1500
-    );
-  }
-
-  snowGeo.setAttribute('position', new THREE.Float32BufferAttribute(snowPos, 3));
-  const snowMat = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 4,
-    transparent: true,
-    opacity: 0.8
-  });
-  const snow = new THREE.Points(snowGeo, snowMat);
-  scene.add(snow);
-
-  // 光照
-  const light = new THREE.PointLight(0xff88cc, 1.5, 2000);
-  light.position.set(0, 300, 400);
-  scene.add(light);
-
-  // 动画
-  function animate() {
-    requestAnimationFrame(animate);
-
-    tree.rotation.y += 0.002;  // 树缓慢旋转
-    snow.position.y -= 1;      // 雪下落
-    if (snow.position.y < -200) snow.position.y = 400;
-
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  // 自适应窗口
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-</script>
-
-</body>
-</html>
+pygame.quit()
+sys.exit()
